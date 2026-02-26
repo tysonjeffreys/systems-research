@@ -1,0 +1,420 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\emergencystretch=1em
+
+\usepackage{amsmath, amssymb}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\DeclareUnicodeCharacter{2192}{\ensuremath{\rightarrow}}
+
+\begin{document}
+\begin{titlepage}
+\thispagestyle{empty}
+\raggedright
+
+\vspace*{0.62\textheight}
+
+{\Large\bfseries Concept Containers as Representation-Level Regulation in Artificial Agents\par}
+\vspace{0.4em}
+{\large\itshape AI / agent architectures\par}
+
+\vspace{1.6em}
+
+Tyson Jeffreys\\
+Independent Researcher\\
+\href{mailto:tyson@staygolden.dev}{tyson@staygolden.dev}
+
+\vspace{1.6em}
+
+Version 1.3 --- February 16, 2026
+
+\end{titlepage}
+
+
+\noindent\textbf{Series note (2/3).} This paper is Part 2 of a three-paper series on regime-level regulation in intelligent systems. Part 1 (Two-Regime Control) frames latent coordination vs.\ compensation in embodied control and introduces a baseline regulator layer. Here we generalize the framing to representation-level regulation via concept containers that amortize causal structure and reduce repeated recomputation. Part 3 translates the same principle into a product-facing objective for research systems: minimizing time-to-analysis.. Companion framing: \emph{Regulatory Ground for Agentic AI} extends the same regulation view to runtime operating layers (budgets, uncertainty gating, rollback, and a global restraint signal). Concept containers fill the representation-level component of that stack.\par\medskip
+
+
+
+
+\section*{Abstract}
+We introduce \textbf{concept containers}: reusable compressed representations that preserve causal structure while minimizing cognitive or computational cost. We argue that concept containers function as a form of \textbf{representation-level regulation} in intelligent agents: they reduce repeated recomputation, lower internal contention, and stabilize decision trajectories while maintaining (or improving) transfer. This framing unifies ideas from temporal abstraction, world modeling, retrieval, and energy-aware AI under a single design objective: \textbf{minimize time-to-usable-causal-structure per unit compute}.
+
+We formalize concept containers as learned or constructed abstractions \(z\) that support intervention-relevant predictions while enabling compute savings. We propose measurable quality criteria (causal fidelity, transfer, and compute reduction at equal performance), outline architectural patterns for LLM agents and learned controllers, and offer falsifiable experiments. We also describe failure modes—especially over-compression—and practical guardrails (provenance, falsifiers, and confidence).
+
+In the companion runtime-regulation framing (\emph{Regulatory Ground for Agentic AI}), containers act as representation-level boundary conditions: they reduce internal thrash so exogenous budgets and uncertainty gating can operate with fewer interventions.
+
+\section*{1. Introduction}
+Modern AI systems can generate fluent outputs and solve many tasks, yet they frequently exhibit:
+
+\begin{itemize}
+\item long deliberation chains and redundant reasoning
+\item high token/tool usage to reach stable conclusions
+\item frequent reversals (“thrash”) under new evidence
+\item poor transfer when the surface form changes
+\end{itemize}
+
+A common interpretation is that agents need \emph{more} reasoning. We propose the opposite diagnosis: agents often suffer from \textbf{insufficient compression of causal structure}. They repeatedly rebuild similar models rather than reusing stable abstractions.
+
+This paper presents a simple thesis:
+
+\begin{quote}
+\textbf{Efficient intelligence requires representations that are both compressive and intervention-valid.}
+\end{quote}
+
+\noindent\textbf{Coherence requires support at the representation layer.} Compression without structural support \emph{(provenance, falsifiers, and intervention checks)} yields brittle abstractions that look coherent but collapse under perturbation. In practice, container quality depends on support density, not compression ratio alone.
+
+We call these representations \textbf{concept containers}, and we treat them as a regulatory primitive—analogous to a baseline regulator that prevents chronic over-activation.
+
+\section*{2. Concept containers}
+
+\subsection*{2.1 Definition}
+A \textbf{concept container} is:
+
+\begin{quote}
+A reusable representation that preserves causal structure while minimizing computational cost.
+\end{quote}
+
+It is not merely a summary, label, or topic tag. A container must support \emph{correct action selection} under relevant interventions.
+
+Formally, let \(x\) denote observations (text, sensory streams, states), \(a\) denote an intervention/action, and \(y\) denote outcomes of interest (success, safety, reward, constraint satisfaction). A container is a mapping \(f\):
+
+\[
+ z = f(x_{1:t})
+\]
+
+such that for a target intervention set \(\mathcal{A}\), the representation \(z\) is sufficient to predict the effect of interventions:
+
+\[
+\forall a \in \mathcal{A}:\quad p(y \mid do(a), x_{1:t}) \approx p(y \mid do(a), z)
+\]
+
+This captures “preserves causal structure” as intervention-relevant sufficiency.
+
+\subsection*{2.2 Properties}
+A good container has three operational properties:
+
+\begin{enumerate}[label=\arabic*)]
+\item \textbf{Compression}
+\end{enumerate}
+\begin{itemize}
+\item reduces effective dimensionality / state complexity
+\item lowers the cost of inference, planning, or deliberation
+\end{itemize}
+
+\begin{enumerate}[label=\arabic*)]
+\item \textbf{Portability}
+\end{enumerate}
+\begin{itemize}
+\item generalizes across surface forms and contexts
+\item supports transfer without re-deriving the full model
+\end{itemize}
+
+\begin{enumerate}[label=\arabic*)]
+\item \textbf{Procedural force}
+\end{enumerate}
+\begin{itemize}
+\item changes downstream behavior (policy choice, search strategy, uncertainty handling)
+\item acts like a mental macro or planning primitive
+\end{itemize}
+
+\subsection*{2.3 Container vs summary}
+A summary compresses content. A container compresses \textbf{structure}.
+
+\begin{itemize}
+\item Summary answers: “What was said?”
+\item Container answers: “What variables matter? How do they interact? What levers change outcomes? What would falsify this?”
+\end{itemize}
+
+\section*{3. Containers as representation-level regulation}
+
+\subsection*{3.1 Repeated recomputation and internal contention}
+Consider an agent producing a sequence of internal states \(h_t\) while solving a task. Define a proxy for internal activation/effort \(x(t)\) (tokens generated, tool calls, planner expansions, or compute time).
+
+Many agents repeatedly reconstruct similar intermediate models:
+
+\begin{itemize}
+\item the same causal argument rederived across prompts
+\item redundant search and rechecking
+\item repeated “stabilization” steps after perturbations
+\end{itemize}
+
+This is \textbf{internal contention}: the system uses capacity to manage instability rather than to improve representation quality.
+
+\subsection*{3.2 Containers reduce activation duty cycle}
+Let \(\bar x(t)\) be a filtered internal-load signal. Define a high-activation indicator:
+
+\[
+H(t) = \mathbb{1}[\bar x(t) > \theta]
+\]
+
+and an activation duty cycle:
+
+\[
+DC(t_0,t_1) = \frac{1}{t_1-t_0}\int_{t_0}^{t_1} H(t)\,dt
+\]
+
+\textbf{Hypothesis:} If an agent uses good containers, it achieves comparable task success while reducing \(DC\) and peak \(x(t)\) by reusing causal structure rather than recomputing it.
+
+\subsection*{3.3 Regulation framing}
+We interpret containers as a regulator at the representation layer:
+
+\begin{itemize}
+\item they lower baseline compute required to stay coherent on a problem
+\item they reduce thrash and reversals
+\item they enable “spikes” of compute only when uncertainty truly demands it
+\end{itemize}\subsection*{3.4 Interface to runtime regulation layers}
+Representation-level regulation and runtime regulation solve complementary problems. A runtime regulator (budgets, uncertainty gating, rollback) can keep an agent inside safe operating bands, but it does not by itself reduce repeated recomputation. Containers provide reusable causal structure that lowers the internal-load signal the regulator would otherwise be reacting to.
+
+Two practical integration points:
+\begin{itemize}
+\item \textbf{Posture-modulated reuse:} a global restraint/posture variable can modulate retrieval and recomputation thresholds. Under tighter posture, prefer high-provenance containers and limit novel exploration; under looser posture, allow synthesis of new containers and broader search.
+\item \textbf{Regulated container writes:} treat container creation/update as a committed action: require provenance, explicit falsifiers, and confidence; log revisions and measure whether they persist and constrain future trajectories.
+\end{itemize}
+\noindent\textbf{Abstention-gated container writes.} Container updates are treated as commits. When tie/abstain mass is high (or uncertainty is above threshold), the system must block container writes and instead request discriminating evidence or produce falsifiers. This commit discipline prevents over-compression from becoming an irreversible representation attractor and is enforced in the replay suite's over-compression scenario (RG-07).
+
+
+\section*{4. Compute and energy implications}
+Large-scale systems pay a direct cost for repeated recomputation: tokens, tool calls, and model forward passes translate into compute time and energy.
+
+Let \(k\) be a compute proxy (tokens, tool invocations, FLOPs). Total compute over a task:
+
+\[
+K = \int_0^T k(t)\,dt
+\]
+
+If containers reduce long tails of deliberation and repeated stabilization, then \(K\) decreases at equal task success.
+
+A second-order benefit is variance reduction: fewer thrash cycles means more stable trajectories in internal state space, which reduces the need for corrective computation.
+
+\section*{5. Quality criteria and metrics}
+We propose three core criteria for container quality.
+
+\subsection*{5.1 Causal fidelity}
+A container must preserve intervention-relevant structure. Practical tests:
+
+\begin{itemize}
+\item counterfactual queries: does the container predict changes under plausible interventions?
+\item consistency checks: do predictions remain stable across paraphrases?
+\item falsifier sensitivity: does new disconfirming evidence correctly update the container?
+\end{itemize}
+
+\subsection*{5.2 Transfer}
+Test whether containers generalize across:
+
+\begin{itemize}
+\item domains (technical → business → safety)
+\item surface forms (different wording, different evidence ordering)
+\item task variants (similar causal skeleton)
+\end{itemize}
+
+\subsection*{5.3 Compute reduction at equal performance}
+For a fixed success threshold, measure:
+
+\begin{itemize}
+\item tokens / tool calls / planner expansions
+\item time-to-stable-decision (time-to-analysis)
+\item reversal count (how often conclusions flip)
+\end{itemize}
+
+\textbf{A container that increases compute while improving success may still be valuable, but it is not functioning as a regulation primitive.}
+
+\subsection*{5.4 Failure mode: over-compression}
+Over-compression collapses the causal skeleton:
+
+\begin{itemize}
+\item the container becomes a slogan, label, or vibe
+\item it stops making intervention-valid predictions
+\item it becomes brittle and misapplies across contexts
+\end{itemize}
+
+A useful diagnostic: if a container cannot produce falsifiers, it is likely over-compressed.\subsection*{5.5 Longitudinal revision persistence}
+To align with the ``endogenous revision'' frontier for discovery-capable agents, evaluate whether container updates \emph{persist} and constrain future behavior (not just patch the last answer). Practical metrics:
+\begin{itemize}
+\item \textbf{Revision half-life:} how long (or how many episodes) a revision remains active before being overwritten or ignored.
+\item \textbf{Reversal count:} how often the container flips back and forth under similar evidence.
+\item \textbf{Constraint imprint:} whether the revised container measurably changes downstream planning (tool choices, search breadth, or abstention) in later tasks.
+\end{itemize}
+
+
+\section*{6. Architectural patterns}
+
+\subsection*{6.1 Container bank architecture}
+A practical agent architecture:
+
+\begin{itemize}
+\item \textbf{Detector:} identifies when a task is entering repeated recomputation (thrash signals)
+\item \textbf{Synthesizer:} constructs a container \(z\) from evidence and reasoning traces
+\item \textbf{Bank:} stores containers with provenance and scope
+\item \textbf{Retriever:} fetches candidate containers for new tasks
+\item \textbf{Composer:} adapts/merges containers and generates action guidance
+\end{itemize}
+
+The key shift is that the system stores \textbf{causal abstractions}, not just answers.
+
+\subsection*{6.2 A minimal container schema}
+A container should include:
+
+\begin{itemize}
+\item \textbf{Name / handle}
+\item \textbf{Scope} (where it applies)
+\item \textbf{Causal skeleton} (variables + directional relations)
+\item \textbf{Levers} (interventions that matter)
+\item \textbf{Predictions} (what changes under each lever)
+\item \textbf{Falsifiers} (what evidence would break it)
+\item \textbf{Confidence} and \textbf{provenance} (sources, timestamps, assumptions)
+\item \textbf{Cost signature} (what compute it saves; what it may risk)
+\end{itemize}
+
+\subsection*{6.3 Integration with LLM agents}
+For LLM-based agents, containers can be implemented as structured artifacts produced after an expensive reasoning episode and re-used via retrieval:
+
+\begin{itemize}
+\item After a task: produce a container instead of a long transcript.
+\item On new tasks: retrieve containers and start from them.
+\item Penalize re-derivation: add a training or runtime objective that prefers reuse when valid.
+\end{itemize}
+
+\subsection*{6.4 Integration with planners and controllers}
+In classical or learned control, containers correspond to:
+
+\begin{itemize}
+\item options / skills (macro-actions)
+\item state abstractions (task-relevant variables)
+\item invariants (constraints that govern safe/efficient behavior)
+\end{itemize}
+
+The container view emphasizes causal sufficiency and reuse as an efficiency and stability primitive.
+
+\subsection*{6.5 Regulated agent stack integration}
+In a regulated agent stack (untrusted competence core + independent runtime regulator), containers can be treated as first-class objects with explicit cost/risk semantics:
+\begin{itemize}
+\item \textbf{Cost signature as input to budgets:} container metadata (expected compute savings, expected failure modes) can inform budgeting and gating decisions.
+\item \textbf{Containers as boundary conditions:} invariants and ``must-hold'' causal commitments can be stored in containers and enforced by the runtime regulator during tool use or actuation.
+\item \textbf{Auditability:} container retrieval, composition, and revision events should be logged so governance can reason about when a representational change caused a behavioral change.
+\end{itemize}
+
+\section*{7. Falsifiable experiments}
+
+\subsection*{7.1 Experiment A: research-to-decision tasks}
+Construct a benchmark where an agent must form a stable causal model from multiple sources.
+
+Compare:
+\begin{itemize}
+\item A1: baseline agent (retrieve + answer)
+\item A2: summarize sources
+\item A3: container pipeline (extract causal skeleton + levers + falsifiers)
+\end{itemize}
+
+Measure:
+\begin{itemize}
+\item success / correctness
+\item tokens + tool calls
+\item reversal count
+\item time-to-stable-decision
+\end{itemize}
+
+\textbf{Prediction:} A3 reduces compute and reversals at equal success.
+
+\subsection*{7.2 Experiment B: paraphrase and domain transfer}
+Hold the causal structure constant while varying surface form.
+
+Measure whether the container pipeline maintains:
+\begin{itemize}
+\item stable levers and predictions
+\item stable falsifiers
+\item lower recomputation costs
+\end{itemize}
+
+\subsection*{7.3 Experiment C: induced perturbation / conflicting evidence}
+Inject adversarial or conflicting evidence mid-task.
+
+Measure:
+\begin{itemize}
+\item whether the agent updates the container correctly
+\item whether the revision persists and constrains later exploration (revision half-life)
+\item whether it thrashes (multiple reversals)
+\item compute used to regain coherence
+\end{itemize}
+
+\textbf{Negative test:} If containers cause higher brittleness under conflict, the system requires stronger provenance and falsifier mechanisms.
+
+\section*{8. Discussion}
+Concept containers are not a replacement for reasoning; they are a method for \textbf{storing the results of reasoning as reusable causal structure}.
+
+The core claim is architectural:
+
+\begin{itemize}
+\item Many agents waste compute not because they cannot think, but because they cannot \textbf{retain and reuse the right kind of thinking}.
+\item Containers reduce the need for chronic corrective computation.
+\item Over time, a container bank can act like a representational baseline: stable, low-cost, and ready to support spikes when needed.
+\end{itemize}
+
+Seen through the runtime-regulation lens, concept containers reduce the probability that an agent will enter high-activation regimes that trigger frequent intervention (budgets, safe-mode switches, rollback). In other words: better representations make band-limited optimization easier to enforce, because the regulator is not constantly compensating for internal instability.
+
+
+\section*{9. Limitations}
+\begin{itemize}
+\item Defining \(\mathcal{A}\) (the relevant intervention set) is domain-dependent.
+\item Containers can drift if not grounded in provenance.
+\item Poor retrieval can misapply containers.
+\item Over-compression is a persistent risk.
+\end{itemize}
+
+\section*{10. Conclusion}
+We proposed concept containers as a representation-level regulation mechanism for artificial agents. A concept container is a reusable compressed representation that preserves causal structure while minimizing computational cost. This framing yields concrete design principles, measurable quality criteria, and falsifiable predictions.
+
+The broader implication is that efficient intelligence depends not only on the ability to reason, but on the ability to \textbf{stabilize and reuse causal structure}—reducing repeated recomputation and internal contention while preserving intervention-valid competence.
+
+\noindent\textbf{Cross-cutting principle.} Coherence requires support: representation compression is only reliable when coupled to provenance, falsifiers, and revision discipline.
+
+\hrule
+
+
+\section*{Appendix A: Practical scoring functions}
+
+A pragmatic container score can combine:
+
+\[
+Q(z) = \alpha\,\text{Fidelity}(z) + \beta\,\text{Transfer}(z) - \gamma\,\text{Compute}(z)
+\]
+
+where Compute(z) is measured as additional tokens/tool calls required to solve a fixed task set with vs. without container reuse.
+
+\section*{Appendix B: Example container (template)}
+\begin{itemize}
+\item \textbf{Handle:} “Pressure point”
+\item \textbf{Scope:} systems strategy / pipeline optimization
+\item \textbf{Causal skeleton:} upstream bottlenecks create downstream compounding constraints
+\item \textbf{Levers:} reduce bottleneck latency; increase reuse of analysis structure
+\item \textbf{Predictions:} lowering time-to-analysis improves outcomes across decision layers
+\item \textbf{Falsifiers:} if time-to-analysis decreases but decisions do not improve, the bottleneck is elsewhere
+\item \textbf{Provenance:} sources + assumptions
+\end{itemize}
+
+\noindent\textbf{Example container (instantiated):}\par
+\begin{itemize}
+\item \textbf{Handle:} “Latent coordination vs.\ compensation”
+\item \textbf{Scope:} embodied control stacks (locomotion/manipulation)
+\item \textbf{Causal skeleton:} when passive dynamics + low-bandwidth feedback can carry the task, corrective effort stays low; when coupling breaks (uncertainty/contact/limits), overrides dominate and energy rises.
+\item \textbf{Levers:} measure compensation load; add a slow regulator that biases posture/\allowbreak planning/\allowbreak estimation back toward low-compensation basins.
+\item \textbf{Predictions:} lowering compensation duty cycle reduces energy per task and peak actuator stress at similar success.
+\item \textbf{Falsifiers:} if duty cycle falls without reducing energy/stress or improving robustness, the index is mis-specified or the bottleneck lies elsewhere.
+\item \textbf{Provenance:} system logs (torque/current, replanning events, estimator uncertainty, slip), plus task/terrain conditions.
+\end{itemize}
+
+\newpage
+
+{
+\noindent\textbf{Note on authorship and tools:}\\
+This work was developed through iterative reasoning, modeling, and synthesis.
+Large language models were used as a collaborative tool to assist with drafting,
+clarification, and cross-domain translation. All conceptual framing, structure,
+and final judgments remain the responsibility of the author.
+}
+
+\end{document}

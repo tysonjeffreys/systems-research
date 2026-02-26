@@ -1,0 +1,290 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb}
+\usepackage{hyperref}
+
+% pandoc compatibility
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+
+% Prevent automatic section numbering (headings already include explicit numbers)
+\setcounter{secnumdepth}{0}
+
+\begin{document}
+
+\begin{titlepage}
+\thispagestyle{empty}
+\raggedright
+
+\vspace*{0.62\textheight}
+
+{\Large\bfseries Critics-as-Sensors\\\large Abstention-Gated Selection for Verifier-Free Discovery\par}
+
+\vspace{0.4em}
+{\large\itshape Synthesis note / bridge across the Prism series\par}
+
+\vspace{1.6em}
+
+Tyson Jeffreys\\
+Independent Researcher\\
+\href{mailto:tyson@staygolden.dev}{tyson@staygolden.dev}
+
+\vspace{1.6em}
+
+Version 0.1 --- February 2026
+
+\end{titlepage}
+
+\noindent\textbf{Bridge note.} This short note operationalizes the ``verifier gap'' as a concrete selection-and-governance layer for non-verifiable tasks (research synthesis, strategy, writing, design tradeoffs). It connects three existing claims from the Prism series: (i) analysis-layer artifacts reduce time-to-analysis by exposing causal structure and falsifiers, (ii) concept containers regulate representation-level commitments as reusable compressed structure, and (iii) trustworthy discovery requires band-limited optimization with explicit posture control and rollback discipline.
+\par\medskip
+
+\hypertarget{abstract}{%
+\subsection{Abstract}\label{abstract}}
+
+Many high-impact tasks lack crisp verifiers: there is no reliable ground-truth checker that can be applied during reasoning or selection. In these domains, systems often fail not because information is missing, but because selection among competing causal stories is unconstrained, leading to thrash, cycling, or premature compression.
+
+We propose a missing operational layer: \textbf{critics-as-sensors}. Learned judges/critics can be useful, but they must be treated as \emph{noisy telemetry} rather than authorities. The core primitive is \textbf{abstention-gated selection}: bounded candidate generation plus bounded pairwise selection (tournament-style), with \textbf{tie/abstain mass} acting as a first-class uncertainty signal that triggers evidence collection rather than further synthesis. We then specify minimal critic governance (versioning, drift checks, and a replay suite) to prevent silent preference rotation and exploitation.
+
+The result is a falsifiable blueprint for verifier-free discovery under regulation: selection becomes a controlled procedure, and commitments (containers, summaries, plans) become gated commits rather than free-running narratives.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hypertarget{introduction}{%
+\subsection{1. Introduction}\label{introduction}}
+
+Most ``research assistants'' accelerate retrieval and summarization. But the bottleneck in real work is often different: selecting and committing to a defensible structure when correctness is not directly checkable.
+
+This note isolates that condition as the \textbf{verifier gap} and proposes an operational response that fits inside a regulated agent stack.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hypertarget{verifier-gap}{%
+\subsection{2. The verifier gap}\label{verifier-gap}}
+
+A \textbf{verifier} is any procedure that can reliably determine correctness (or assign a stable reward) for candidate outputs. Many tasks do not provide such a procedure at decision time:
+
+\begin{itemize}
+\tightlist
+\item research synthesis (conflicting sources, incomplete evidence)
+\item strategy and prioritization (counterfactual, value-laden)
+\item analytical writing (argument quality, framing)
+\item design tradeoffs (multi-objective and preference-dependent)
+\end{itemize}
+
+In verifier-free domains, systems face a selection problem: they can generate many plausible stories, but they cannot cleanly \emph{verify} which story is best. Without regulation, optimization pressure often produces:
+
+\begin{itemize}
+\tightlist
+\item \textbf{thrash}: repeated recomputation and reversals
+\item \textbf{cycling}: exploitation of selection quirks; oscillating preferences
+\item \textbf{premature compression}: committing to a slogan-like container too early
+\end{itemize}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hypertarget{critics-as-sensors}{%
+\subsection{3. Critics as sensors (not authorities)}\label{critics-as-sensors}}
+
+A learned critic/judge can rank alternatives, but it is itself a fallible model that can drift, be gamed, or collapse into degenerate behaviors (always win / always tie). Therefore:
+
+\begin{quote}
+\textbf{Use critics as telemetry sources, not as authorities.}
+\end{quote}
+
+In practice, this means critic outputs are treated like any other sensor stream:
+
+\begin{itemize}
+\tightlist
+\item they are \textbf{versioned} and monitored for drift
+\item they contribute to posture control (tighten or loosen budgets)
+\item they do not directly authorize irreversible commitments without gating
+\end{itemize}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hypertarget{abstention-gated-selection}{%
+\subsection{4. Abstention-gated selection}\label{abstention-gated-selection}}
+
+We define a selection primitive suitable for verifier-free domains.
+
+\hypertarget{bounded-generation}{%
+\subsubsection{4.1 Bounded candidate generation}\label{bounded-generation}}
+
+Generate a small set of candidates ($K$) where each candidate is an \textbf{analysis artifact}: it must include levers, predictions, falsifiers, and uncertainty boundaries. The goal is not ``more text,'' but a small set of competing, testable causal stories.
+
+\hypertarget{bounded-selection}{%
+\subsubsection{4.2 Bounded pairwise selection}\label{bounded-selection}}
+
+Select among candidates with bounded pairwise comparisons (tournament-style or capped round-robin). Each comparison returns:
+
+\begin{itemize}
+\tightlist
+\item win(A)
+\item win(B)
+\item tie/abstain
+\end{itemize}
+
+Pairwise selection is favored over isolated scoring because it reduces drift in absolute reward scales and keeps selection anchored to relative preference.
+
+\hypertarget{abstention-mass}{%
+\subsubsection{4.3 Abstention mass as an uncertainty signal}\label{abstention-mass}}
+
+Define \textbf{abstention mass} as the fraction of comparisons returning tie/abstain (or equivalently, the entropy/margin of the pairwise preference distribution).
+
+\begin{quote}
+\textbf{High abstention mass should not trigger more synthesis. It should trigger evidence.}
+\end{quote}
+
+If abstention mass exceeds a threshold, the system must route control flow into an evidence-gathering step (stronger sources, discriminating falsifiers, or minimal interventions) before re-running selection.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hypertarget{commit-semantics}{%
+\subsection{5. Commit semantics across the Prism series}\label{commit-semantics}}
+
+The selection primitive becomes the ``missing joint'' across the trilogy:
+
+\begin{itemize}
+\tightlist
+\item \textbf{Time-to-Analysis:} analysis artifacts are the unit of action readiness, but verifier-free selection requires a bounded protocol.
+\item \textbf{Concept Containers:} container writes are commits. High abstention mass gates writes to prevent over-compression.
+\item \textbf{Regulatory Ground:} abstention mass feeds posture control: tighten budgets, restrict actions, require stronger provenance, and enable rollback.
+\end{itemize}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hypertarget{critic-governance}{%
+\subsection{6. Critic governance: versioning, drift checks, replay suite}\label{critic-governance}}
+
+Verifier-free systems become brittle when critic behavior changes invisibly. Minimal governance:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi})}
+\tightlist
+\item \textbf{Version pinning:} record critic version, prompt template, and calibration settings for every selection run.
+\item \textbf{Drift checks:} maintain a small fixed set of canonical comparisons (a replay suite). Track preference flip rate, abstention drift, and paraphrase sensitivity across versions.
+\item \textbf{Rollback semantics:} if drift spikes or the critic collapses (always-win or always-tie), downgrade posture and revert critic configuration.
+\end{enumerate}
+
+This is the same spirit as regulated tool use: selection itself is a high-leverage control surface and must be governed.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hypertarget{metrics}{%
+\subsection{7. Metrics}\label{metrics}}
+
+Add verifier-free selection metrics to the series' evaluation family:
+
+\begin{itemize}
+\tightlist
+\item \textbf{Selection budget:} candidates $K$, number of comparisons, number of cycles.
+\item \textbf{Abstention mass:} tie/abstain rate; preference entropy; win margin.
+\item \textbf{Synthesis gate rate:} frequency of ``refuse to synthesize; request evidence'' actions.
+\item \textbf{Commit stability:} reversal rate for committed artifacts (containers, decisions, plans).
+\end{itemize}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hypertarget{experiments}{%
+\subsection{8. Falsifiable experiments}\label{experiments}}
+
+\hypertarget{experiment-1}{%
+\subsubsection{8.1 Verifier-free decision tasks}\label{experiment-1}}
+
+Compare:
+
+\begin{itemize}
+\tightlist
+\item baseline: retrieve + summarize + single synthesis
+\item regulated: $K$ candidates + tournament selection + abstention gating + evidence escalation
+\end{itemize}
+
+Measure time-to-analysis, compute-to-analysis, reversals, and post-hoc expert grading.
+
+\hypertarget{experiment-2}{%
+\subsubsection{8.2 Container write discipline}\label{experiment-2}}
+
+Test whether abstention-gated container writes reduce over-compression:
+
+\begin{itemize}
+\tightlist
+\item lower reversal rate
+\item higher falsifier quality
+\item better transfer under surface-form shift
+\end{itemize}
+
+\hypertarget{experiment-3}{%
+\subsubsection{8.3 Critic drift and gaming}\label{experiment-3}}
+
+Perturb critic prompts or swap judge models; measure replay-suite flip rates and whether governance triggers rollback and posture tightening.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hypertarget{limitations}{%
+\subsection{9. Limitations}\label{limitations}}
+
+\begin{itemize}
+\tightlist
+\item \textbf{Critic bias:} critics can be systematically biased or preference-misaligned.
+\item \textbf{Degenerate abstention:} always-tie behavior can block progress; governance must detect collapse.
+\item \textbf{Judge quirks:} tournament selection can amplify quirks unless calibration and drift checks exist.
+\item \textbf{Threshold tuning:} abstention thresholds and escalation ladders are domain dependent.
+\end{itemize}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hypertarget{conclusion}{%
+\subsection{10. Conclusion}\label{conclusion}}
+
+Verifier-free discovery is not solved by ``more reasoning.'' It requires a regulated selection-and-commit discipline. Treat critics as sensors, keep selection bounded, use abstention mass as an uncertainty control signal, and govern critic drift with versioning, replay suites, and rollback semantics.
+
+This note proposes a concrete missing layer that completes the trilogy's arc: baseline posture control, reusable structure, and regulated synthesis are not sufficient unless verifier-free selection itself is operationalized and governed.
+\noindent\textbf{Implementation pointer.} A small replayable CI gate accompanies this note to operationalize tournament selection + abstention gating as a concrete harness. The goal is not to ``prove correctness,'' but to enforce commit discipline, injection resistance, and stability under perturbation as minimal requirements for verifier-free discovery systems.
+\noindent\textbf{Retrieval-gate analogue.} The same discipline applies to retrieval systems: deterministic scoring where needed, tie-mass telemetry as uncertainty, and abstention-gated commit policy for downstream writes. The target is not identical prose on every run, but stable commit/withhold decisions, explicit rationale, and bounded variation under replay.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hypertarget{appendix-a}{%
+\subsection{Appendix A: Minimal selection protocol (pseudocode)}\label{appendix-a}}
+
+\begin{verbatim}
+Input: query/task Q, candidate budget K, abstention threshold tau
+
+1) Generate K analysis artifacts Ai (each must include levers + falsifiers)
+2) Run bounded pairwise comparisons between candidates using critic C
+3) Compute abstention_mass = (# tie/abstain comparisons) / (total comparisons)
+4) If abstention_mass > tau:
+       gather evidence (retrieve stronger sources, produce discriminating falsifiers,
+       or run a minimal intervention) and return to step (1)
+   Else:
+       select winner via tournament/majority vote and synthesize a final artifact
+5) Record critic version, prompts, and replay-suite results for drift monitoring
+\end{verbatim}
+
+\hypertarget{appendix-b}{%
+\subsection{Appendix B: Replay suite checklist}\label{appendix-b}}
+
+Maintain a small fixed set of canonical comparisons and track across versions:
+
+\begin{itemize}
+\tightlist
+\item preference flip rate
+\item abstention rate drift
+\item sensitivity to paraphrase
+\item sensitivity to added irrelevant detail
+\end{itemize}
+
+\newpage
+
+{
+\noindent\textbf{Note on authorship and tools:}\\
+This work was developed through iterative reasoning, modeling, and synthesis.
+Large language models were used as a collaborative tool to assist with drafting,
+clarification, and cross-domain translation. All conceptual framing, structure,
+and final judgments remain the responsibility of the author.
+}
+
+\end{document}

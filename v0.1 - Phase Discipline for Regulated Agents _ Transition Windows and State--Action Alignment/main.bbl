@@ -1,0 +1,38 @@
+\begin{thebibliography}{6}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Jeffreys(2025)]{jeffreys2025baseline_constraint}
+Tyson Jeffreys.
+\newblock Baseline regulation and global constraint signals in embodied control systems: Implications for artificial intelligence and robotics, 12 2025.
+\newblock Version 1.0 (December 28, 2025). Working paper.
+
+\bibitem[Jeffreys(2026{\natexlab{a}})]{jeffreys2026two_regime_control}
+Tyson Jeffreys.
+\newblock Two-regime control: Latent coordination vs compensation in intelligent systems, 2 2026{\natexlab{a}}.
+\newblock Version 1.0 (February 3, 2026). Working paper.
+
+\bibitem[Jeffreys(2026{\natexlab{b}})]{jeffreys2026concept_containers}
+Tyson Jeffreys.
+\newblock Concept containers, 2026{\natexlab{b}}.
+\newblock Working paper.
+
+\bibitem[Jeffreys(2026{\natexlab{c}})]{jeffreys2026time_to_analysis}
+Tyson Jeffreys.
+\newblock Time-to-analysis layer, 2026{\natexlab{c}}.
+\newblock Working paper.
+
+\bibitem[Provilkov and Cai(2025)]{provilkov2025escaping}
+Ivan Provilkov and Locke Cai.
+\newblock Escaping the verifier: Learning to reason via demonstrations, 2025.
+\newblock arXiv:2511.21667v3 (Dec 9, 2025).
+
+\bibitem[Jeffreys(2026{\natexlab{d}})]{jeffreys2026waste_energy}
+Tyson Jeffreys.
+\newblock Why intelligent systems waste energy: Baseline regulation as a missing architectural primitive, 1 2026{\natexlab{d}}.
+\newblock Version 1.0 (January 14, 2026). Working paper.
+
+\end{thebibliography}

@@ -1,0 +1,343 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\emergencystretch=1em
+
+\usepackage{amsmath, amssymb}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage[numbers]{natbib}
+
+% pandoc compatibility (used across Prism projects)
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+
+% Unicode support for common symbols
+\DeclareUnicodeCharacter{2192}{\ensuremath{\rightarrow}}
+\DeclareUnicodeCharacter{2248}{\ensuremath{\approx}}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  urlcolor=blue,
+  citecolor=blue
+}
+
+\setlist[itemize]{leftmargin=*, itemsep=0.25em, topsep=0.25em}
+\setlist[enumerate]{leftmargin=*, itemsep=0.25em, topsep=0.25em}
+
+\begin{document}
+
+\begin{titlepage}
+\thispagestyle{empty}
+\raggedright
+
+\vspace*{0.62\textheight}
+
+{\Large\bfseries The Verifier Gap\par}
+\vspace{0.35em}
+{\large\itshape Regulation for Non-Verifiable Reasoning\par}
+
+\vspace{0.4em}
+{\large\itshape AI / agent architectures \& research systems\par}
+
+\vspace{1.6em}
+
+Tyson Jeffreys\\
+Independent Researcher\\
+\href{mailto:tyson@staygolden.dev}{tyson@staygolden.dev}
+
+\vspace{1.6em}
+
+Version 0.1 --- February 11, 2026
+
+\end{titlepage}
+
+\noindent\textbf{Series extension.} This short paper names a missing layer in the Baseline / regulation series: what to do when \emph{verification is unavailable} but the system still requires \emph{selection signals} to learn, decide, and commit. It bridges: Two-Regime Control (regime dynamics), Concept Containers (representation commits), The Time-to-Analysis Layer (research objective), and Regulatory Ground (runtime governance).\par\medskip
+
+\section*{Abstract}
+Most valuable reasoning tasks are non-verifiable: there is no crisp oracle for correctness, only demonstrations, partial evidence, expert disagreement, and downstream consequences. Yet both training and deployment require selection: which candidate is better, which plan to execute, which belief to commit, and which abstraction to store.
+
+Recent work shows that demonstration-driven preference training can elicit reasoning without explicit verifiers, but also exposes a structural instability: the agent--judge coupled system can cycle, drift, collapse into abstention/ties, or be gamed by optimization pressure \citep{provilkov2025escaping}.
+
+This paper names that regime as \textbf{the verifier gap} and proposes a design response:
+
+\begin{quote}
+\textbf{In non-verifiable domains, learned judges are unavoidable but unsafe as authorities; they must be treated as noisy sensors and governed by band-limited operating discipline.}
+\end{quote}
+
+We define a \textbf{Verifier Gap Layer}: a regulation layer that wraps judge-mediated selection with (i) abstention/tie mass as uncertainty telemetry, (ii) bounded candidate generation and bounded selection, (iii) commit gating for irreversible writes (including representation updates), (iv) judge versioning and drift monitoring, and (v) rollback/recovery semantics. We propose measurable signals, falsifiable experiments, and negative tests.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\section*{1. Introduction}
+Most ``agentic'' failures are not single-shot wrong answers; they are coupled-loop failures: repeated tool misuse, chronic thrash, and irreversible commits made under poorly managed uncertainty.
+
+A practical reason is simple: most high-value tasks do not come with verifiers. In research synthesis, analytical writing, strategy, forecasting, and open-ended design, the system still must choose---but it cannot reliably check.
+
+This paper separates two concepts:
+\begin{itemize}
+\item \textbf{Verifier:} a task-specific procedure $V(x,y)$ that returns reliable correctness for candidate output $y$ on input $x$.
+\item \textbf{Selection signal:} any criterion used to rank candidates when $V$ is absent (learned judges, rubrics, pairwise preferences, tournaments, proxy metrics).
+\end{itemize}
+
+The \textbf{verifier gap} is the regime where \emph{selection exists but verification does not}. The core claim is architectural: in this regime, selection signals must be treated as telemetry and wrapped in band-limited governance.
+
+\section*{2. The Verifier Gap}
+\subsection*{2.1 Why the verifier gap is the default}
+Non-verifiable tasks typically have:
+\begin{itemize}
+\item incomplete or adversarial evidence,
+\item value-laden success criteria,
+\item downstream correctness (cost appears later),
+\item persistent expert disagreement,
+\item and a requirement to surface uncertainty rather than hide it.
+\end{itemize}
+
+Therefore, optimizing systems around retrieval and summarization misses a deeper bottleneck: \textbf{forming intervention-ready structure under uncertainty.}
+\noindent\textbf{Candidate generation is not selection.} Context-aware long-document retrievers can materially improve the candidate set (better scope control, stronger causal context, less lexical confusion), but verifier-free failure still concentrates in unstable selection signals and premature commits. Retrieval quality is upstream leverage, not a replacement for governance.
+\noindent\textbf{Operational implication.} Even with improved retrieval, systems still require bounded selection, abstention/tie telemetry, and commit gating to prevent verifier-free cascades. This is why retrieval artifacts and verifier-gap regulation are complementary layers rather than competing alternatives.
+
+\subsection*{2.2 Commit pressure}
+Even without verifiers, systems must commit:
+\begin{itemize}
+\item external writes (documents, databases, code, messages),
+\item tool actions with side effects,
+\item policy changes that alter future behavior,
+\item and \emph{representation updates} (e.g., storing a concept container).
+\end{itemize}
+
+In verifier-free regimes, the primary safety question becomes: \emph{when is a commit permitted?}
+
+\section*{3. Failure modes of judge-mediated selection}
+In the verifier gap, behavior is governed by a coupled loop:
+
+\begin{quote}
+Generator (policy) $\rightarrow$ candidates $\rightarrow$ Judge $\rightarrow$ preference signal $\rightarrow$ optimization/selection $\rightarrow$ updated generator
+\end{quote}
+
+Treating the judge as an authority yields predictable failure modes.
+
+\subsection*{3.1 Tie/abstention collapse}
+If the judge cannot discriminate, it may default to ties/abstentions. This is not automatically ``safe.'' It can become degeneracy: learning stalls, selection becomes arbitrary, or the system hides behind ambiguity.
+
+\subsection*{3.2 Cycling dynamics (exploit--forget--exploit)}
+Optimization pressure discovers patterns that exploit judge weaknesses; the judge adapts; the policy shifts. The result is oscillation: local progress with global non-convergence. Empirically, this appears in adversarial preference learning as critic collapse and policy cycling \citep{provilkov2025escaping}.
+
+\subsection*{3.3 Rubric drift}
+Even if a judge initially matches a human preference distribution, it can drift under optimization:
+\begin{itemize}
+\item implicit rubric mutation,
+\item preference entanglement (latent factors shift),
+\item domain overfitting,
+\item loss of calibration.
+\end{itemize}
+
+\subsection*{3.4 Commit under uncertainty (irreversible error)}
+When the system commits while the judge is uncertain, the error becomes persistent: wrong abstractions are stored, provenance is contaminated, and reuse amplifies mistakes.
+
+\subsection*{3.5 Self-disowning reasoning and silent reversion}
+A distinct verifier-gap failure is not just ``wrong output,'' but \textbf{self-disowning reasoning}: the system appears to update under evidence pressure, then later disowns that update as ``simulation'' without new evidence. This is a commitment-integrity failure because the same evidence set yields incompatible commitments with no explicit change basis.
+
+Operationally, treat \textbf{no-evidence reversion} as a hard risk signal: if stance changes while evidence is unchanged, the system must either (i) provide a concrete change basis (new data, discovered constraint, explicit prior error) or (ii) remain in abstain/gather posture. Silent reversion should be replay-testable and fail governance gates.
+
+\section*{4. Judge-as-sensor}
+\subsection*{4.1 Principle}
+\textbf{Treat learned judges/critics as telemetry sources, not authorities.}
+Their outputs are measurements of a discriminator, not ground truth.
+
+\subsection*{4.2 Usable signals}
+The safest judge outputs in the verifier gap are not ``scores'' but \textbf{state signals} that can drive posture:
+\begin{itemize}
+\item \textbf{Abstain/tie mass} $A$: fraction of comparisons resulting in tie/abstain.
+\item \textbf{Disagreement entropy} $D$: entropy of preferences across candidates/judges.
+\item \textbf{Stability} $S$: consistency under paraphrase and evidence-order perturbations.
+\item \textbf{Margin} $M$: how decisive comparisons are (if available).
+\item \textbf{Drift indicators} $J$: judge version signatures and measured preference shift.
+\item \textbf{Commitment-integrity risk} $K$: no-evidence reversions and self-disowning events across turns.
+\end{itemize}
+
+These map naturally to runtime regulation: tighten budgets, reduce commit rights, and demand discriminating evidence when uncertainty rises.
+
+\section*{5. Band-limited preference optimization}
+The response proposed here is architectural: \textbf{bound the optimization loop that runs on judge signals}.
+
+We define three band-limits.
+
+\subsection*{5.1 Bounded candidate generation}
+Cap the generator's effort:
+\begin{itemize}
+\item number of samples,
+\item reasoning depth / tool calls,
+\item search breadth,
+\item time spent in ``high activation.''
+\end{itemize}
+
+\subsection*{5.2 Bounded selection}
+Use finite selection mechanisms:
+\begin{itemize}
+\item tournament selection with fixed bracket size,
+\item pairwise comparisons capped per decision,
+\item majority vote across a fixed candidate pool.
+\end{itemize}
+
+No open-ended ``keep sampling until confident.''
+
+\subsection*{5.3 Bounded commits}
+A \textbf{commit} is any irreversible or persistent change:
+\begin{itemize}
+\item external writes,
+\item tool actions with side effects,
+\item storing/updating a concept container,
+\item changing a policy/rule that affects future selection.
+\end{itemize}
+
+Commit permissions must tighten as $A$ and $D$ rise.
+
+\section*{6. The Verifier Gap Layer}
+This section specifies a minimal layer that can be inserted into a regulated agent stack.
+\noindent\textbf{Executable harness.} The Verifier Gap layer is implemented as a replay suite: a minimal, versioned test battery that ingests candidate outputs, applies abstention-gated rules for commits, and emits PASS/FAIL plus stability metrics. This harness is intentionally small so it can be treated as a governance primitive: a shared, reproducible contract for what ``safe selection without a verifier'' means in practice.
+\noindent\textbf{Regulated Retrieval Gates (artifact).} As an operational instantiation of bounded selection + abstention/tie mass, the \texttt{regulated-retrieval-gates} artifact governs upstream retrieval-time choice and exposes telemetry before downstream synthesis or commit steps.
+
+\subsection*{6.1 Components}
+\begin{enumerate}
+\item \textbf{Candidate generator}: produces $N$ candidates $y_1,\dots,y_N$ under a compute budget.
+\item \textbf{Judge(s)}: one or more learned judges/critics, treated as sensors.
+\item \textbf{Telemetry extractor}: computes $(A,D,M,S,J)$ from judge outputs.
+\item \textbf{Posture controller} $g(t)$: maps telemetry into operating posture (budgets, allowed action types, sampling depth).
+\item \textbf{Commit gate}: blocks commits under high uncertainty and requests discriminating evidence.
+\item \textbf{Audit trace}: logs candidates, telemetry, posture decisions, and outcomes.
+\end{enumerate}
+
+\subsection*{6.2 Minimal operating policy}
+\begin{itemize}
+\item If $A$ exceeds a threshold: downgrade posture, block commits, request discriminating evidence (falsifiers/tests).
+\item If $D$ rises: treat as epistemic conflict; maintain competing models rather than forcing consensus.
+\item If $S$ fails under paraphrase/order changes: label judge telemetry unreliable; revert to safer modes or require review.
+\item If $K$ rises (silent reversion / self-disowning): fail commit-integrity checks, withhold commits, and require explicit change-basis logging.
+\end{itemize}
+
+\section*{7. Metrics}
+Verifier-free systems require measurements that do not assume oracle correctness.
+\noindent\textbf{Reproducibility without verifiers.} In this layer, reproducibility is operational rather than answer-identical. We require replayable bounded generation + bounded selection so we can rerun tournaments, recompute tie/abstain mass, and compare posture/commit outcomes across versions. The objective is stable governance behavior under perturbation, with deterministic submodules for schema/safety checks and bounded variation for synthesis outputs.
+
+\subsection*{7.1 Selection uncertainty metrics}
+\begin{itemize}
+\item Tie/abstain mass $A$
+\item Disagreement entropy $D$
+\item Margin statistics $M$
+\item Stability score $S$
+\end{itemize}
+
+\subsection*{7.2 Thrash / cycling metrics}
+\begin{itemize}
+\item \textbf{Reversal count}: how often the selected model/plan flips after new evidence.
+\item \textbf{Oscillation index}: periodic switching between candidate classes.
+\item \textbf{Effort volatility}: high-frequency spikes in compute/tool usage.
+\item \textbf{No-evidence reversion rate}: fraction of stance flips with unchanged evidence.
+\item \textbf{Self-disowning rate}: fraction of episodes where prior reasoning is retroactively disowned without new basis.
+\end{itemize}
+
+\subsection*{7.3 Commit quality proxies}
+Since correctness is not directly verifiable, evaluate commits by:
+\begin{itemize}
+\item provenance completeness,
+\item falsifier presence and quality,
+\item downstream reuse behavior (do commits reduce later recomputation and reversals?).
+\end{itemize}
+
+\section*{8. Falsifiable experiments}
+\subsection*{8.1 Experiment A: analysis-layer demonstrations}
+Construct tasks where human panels grade \emph{analysis artifacts} rather than ``the answer.'' Compare:
+\begin{enumerate}
+\item single-shot output,
+\item multi-sample + bounded tournament selection,
+\item Verifier Gap Layer enabled (abstention-gated commits).
+\end{enumerate}
+
+Measure: time-to-analysis proxies, reversal count under new evidence, compute-to-analysis, and commit rate vs. later expert corrections.
+
+\subsection*{8.2 Experiment B: adversarial evidence injection}
+Inject conflicting sources, misleading claims, and prompt-injection instructions mid-task.
+
+\textbf{Prediction:} the Verifier Gap Layer increases $A$ and $D$, tightens posture, and blocks commits rather than confidently proceeding.
+
+\subsection*{8.3 Experiment C: stability under paraphrase and ordering}
+Keep causal structure fixed; vary surface form and evidence order.
+
+\textbf{Prediction:} healthy selection telemetry remains stable; unhealthy systems flip preferences or inflate disagreement.
+
+\subsection*{8.4 Experiment D: container write discipline}
+Compare unconstrained representation updates vs. abstention-gated commits with falsifier requirements.
+
+\textbf{Negative test:} if commit gating prevents errors but collapses usefulness (system never commits), thresholds or evidence procedures are mis-specified.
+
+\section*{9. Discussion}
+\subsection*{9.1 Training does not remove the need for regulation}
+Demonstrations and preference learning can improve competence, but the verifier gap primarily threatens stability of selection signals and safety of commits. Therefore, training advances do not remove the need for a regulation layer.
+
+\subsection*{9.2 Confidence is the wrong control variable}
+In verifier-free regimes, ``confidence'' often tracks fluency. Tie/abstention mass and disagreement are more reliable as control inputs to posture and commit gating.
+
+\section*{10. Limitations and open questions}
+\begin{itemize}
+\item \textbf{Abstention calibration}: tie mass can be exploited (strategic uncertainty).
+\item \textbf{Judge design}: what architectures yield stable telemetry under adversarial pressure?
+\item \textbf{Anchors and drift}: how large must an anchor set be to detect drift early?
+\item \textbf{Human review}: when does review become necessary vs. too expensive?
+\item \textbf{Multi-judge ensembles}: do they reduce drift or create new failure modes?
+\end{itemize}
+
+\section*{11. Conclusion}
+The verifier gap is where most useful reasoning lives: selection is required, verification is absent. In this regime, learned judges are unavoidable but unsafe as authorities.
+
+The proposed response is architectural: introduce a Verifier Gap Layer that treats judges as sensors, elevates abstention/tie mass to first-class telemetry, and wraps selection with band-limited optimization and commit gating. This layer is the missing bridge between ``models that can reason'' and ``systems that can safely decide and commit without verifiers.''
+
+\hrule
+
+\section*{Appendix A: Suggested figures}
+\begin{enumerate}
+\item \textbf{Verifier vs. selection.} Two columns: (a) verifiable tasks with oracle verifier, (b) verifier-gap tasks with judge telemetry and commit gating.
+\item \textbf{Coupled loop failure.} Generator $\rightarrow$ Judge $\rightarrow$ optimization loop with annotated failure modes (cycling, drift, tie collapse).
+\item \textbf{Verifier Gap Layer block diagram.} Candidates, bounded selection, telemetry extraction $(A,D,S)$, posture $g(t)$, commit gate, audit trace.
+\end{enumerate}
+
+\section*{Appendix B: Minimal Verifier Gap Layer checklist}
+\begin{itemize}
+\item What are the competing causal models?
+\item Where do credible sources disagree?
+\item What intervention would discriminate between models?
+\item What evidence would change the conclusion?
+\item What remains unknown (not merely uncertain)?
+\item What is the current abstain/tie mass $A$ and disagreement $D$?
+\item Is a commit requested? If yes, what rollback/provenance/falsifiers are attached?
+\end{itemize}
+
+\section*{Appendix C: Minimal pseudocode (conceptual)}
+\begin{enumerate}
+\item Generate $N$ candidates under a compute budget.
+\item Run bounded tournament/pairwise selection.
+\item Compute telemetry $(A,D,M,S,J)$.
+\item Map telemetry to posture $g(t)$ (budgets, allowed actions).
+\item If posture is tight: block commits; request discriminating evidence.
+\item If posture is open: allow bounded commit with provenance + rollback.
+\end{enumerate}
+
+\bibliographystyle{plainnat}
+\bibliography{refs}
+
+\newpage
+
+{%
+\noindent\textbf{Note on authorship and tools:}\\
+This work was developed through iterative reasoning, modeling, and synthesis.\\
+Large language models were used as a collaborative tool to assist with drafting,\\
+clarification, and cross-domain translation. All conceptual framing, structure,\\
+and final judgments remain the responsibility of the author.
+}
+
+\end{document}

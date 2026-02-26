@@ -1,0 +1,88 @@
+\begin{thebibliography}{15}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Chen et~al.(2026)Chen, Belkin, Bergen, and Danks]{chen2026nature}
+Eddy~Keming Chen, Mikhail Belkin, Leon Bergen, and David Danks.
+\newblock Does ai already have human-level intelligence? the evidence is clear.
+\newblock \emph{Nature}, 650:\penalty0 36--40, 2 2026.
+\newblock \doi{10.1038/d41586-026-00285-6}.
+
+\bibitem[Kushwaha et~al.(2025)Kushwaha, Ravish, Lamba, and Kumar]{kushwaha2025saferl_cmdp_survey}
+Ankita Kushwaha, Kiran Ravish, Preeti Lamba, and Pawan Kumar.
+\newblock A survey of safe reinforcement learning and constrained mdps: A technical survey on single-agent and multi-agent safety.
+\newblock arXiv:2505.17342, 2025.
+\newblock arXiv:2505.17342.
+
+\bibitem[Ni and Kamgarpour(2025)]{ni2025safe_exploration_cmdp}
+Tingting Ni and Maryam Kamgarpour.
+\newblock A safe exploration approach to constrained markov decision processes.
+\newblock In \emph{Proceedings of The 28th International Conference on Artificial Intelligence and Statistics}, pages 3592--3600. PMLR, 2025.
+
+\bibitem[Miller et~al.(2024)Miller, Zeitler, Shen, Hobbs, Schierman, Viswanathan, and Mitra]{miller2024rta_rl_iccps}
+Kristina Miller, Christopher~K. Zeitler, William Shen, Kerianne Hobbs, John Schierman, Mahesh Viswanathan, and Sayan Mitra.
+\newblock Optimal runtime assurance via reinforcement learning.
+\newblock In \emph{Proceedings of the 15th ACM/IEEE International Conference on Cyber-Physical Systems (ICCPS)}, 5 2024.
+\newblock Air Force Research Laboratory / University of Illinois Urbana-Champaign.
+
+\bibitem[Ghosh et~al.(2025)Ghosh, Simkin, Shiarlis, Nandi, Zhao, Fiedler, Bazinska, Pope, Prabhu, Rohrer, Demoret, and Richardson]{ghosh2025agentic}
+Shaona Ghosh, Barnaby Simkin, Kyriacos Shiarlis, Soumili Nandi, Dan Zhao, Matthew Fiedler, Julia Bazinska, Nikki Pope, Roopa Prabhu, Daniel Rohrer, Michael Demoret, and Bartley Richardson.
+\newblock A safety and security framework for real-world agentic systems.
+\newblock arXiv:2511.21990, 2025.
+\newblock arXiv:2511.21990.
+
+\bibitem[Jeffreys(2026{\natexlab{a}})]{jeffreys2026waste_energy}
+Tyson Jeffreys.
+\newblock Why intelligent systems waste energy: Baseline regulation as a missing architectural primitive, 1 2026{\natexlab{a}}.
+\newblock Version 1.0 (January 14, 2026). Working paper.
+
+\bibitem[Jeffreys(2026{\natexlab{b}})]{jeffreys2026two_regime_control}
+Tyson Jeffreys.
+\newblock Two-regime control: Latent coordination vs compensation in intelligent systems, 2 2026{\natexlab{b}}.
+\newblock Version 1.0 (February 3, 2026). Working paper.
+
+\bibitem[Jeffreys(2025{\natexlab{a}})]{jeffreys2025baseline_constraint}
+Tyson Jeffreys.
+\newblock Baseline regulation and global constraint signals in embodied control systems: Implications for artificial intelligence and robotics, 12 2025{\natexlab{a}}.
+\newblock Version 1.0 (December 28, 2025). Working paper.
+
+\bibitem[Jeffreys(2025{\natexlab{b}})]{jeffreys2025patterns_agent_llm}
+Tyson Jeffreys.
+\newblock Architectural design patterns for baseline regulation in agent and llm systems, 12 2025{\natexlab{b}}.
+\newblock Conceptual supplement (December 30, 2025). Working paper.
+
+\bibitem[Cai and Provilkov(2025)]{cai2025escapingverifier}
+Locke Cai and Ivan Provilkov.
+\newblock Escaping the verifier: Learning to reason via demonstrations.
+\newblock arXiv:2511.21667, 2025.
+\newblock arXiv:2511.21667v3 [cs.LG], 9 Dec 2025.
+
+\bibitem[Jeffreys(2026{\natexlab{c}})]{jeffreys2026concept_containers}
+Tyson Jeffreys.
+\newblock Concept containers, 2026{\natexlab{c}}.
+\newblock Working paper.
+
+\bibitem[Jeffreys(2026{\natexlab{d}})]{jeffreys2026time_to_analysis}
+Tyson Jeffreys.
+\newblock Time-to-analysis layer, 2026{\natexlab{d}}.
+\newblock Working paper.
+
+\bibitem[Jeffreys(2025{\natexlab{c}})]{jeffreys2025patterns_embodied}
+Tyson Jeffreys.
+\newblock Architectural design patterns for baseline regulation in embodied systems, 12 2025{\natexlab{c}}.
+\newblock Conceptual supplement (December 30, 2025). Working paper.
+
+\bibitem[Jeffreys(2026{\natexlab{e}})]{jeffreys2026coherent_human}
+Tyson Jeffreys.
+\newblock Toward a coherent human baseline, 1 2026{\natexlab{e}}.
+\newblock Version 1.0 (January 5, 2026). Working paper.
+
+\bibitem[Jeffreys(2026{\natexlab{f}})]{jeffreys2026lower_metabolic}
+Tyson Jeffreys.
+\newblock Toward a lower human metabolic baseline, 1 2026{\natexlab{f}}.
+\newblock Version 1.0 (January 3, 2026). Working paper.
+
+\end{thebibliography}

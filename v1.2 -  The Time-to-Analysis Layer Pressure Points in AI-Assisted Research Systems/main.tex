@@ -1,0 +1,637 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb}
+\usepackage{hyperref}
+
+% pandoc compatibility
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+
+% Unicode support for symbols present in the source
+\DeclareUnicodeCharacter{2248}{\ensuremath{\approx}}
+\DeclareUnicodeCharacter{2192}{\ensuremath{\rightarrow}}
+
+% Prevent automatic section numbering (headings already include explicit numbers)
+\setcounter{secnumdepth}{0}
+
+\begin{document}
+
+\begin{titlepage}
+\thispagestyle{empty}
+\raggedright
+
+\vspace*{0.62\textheight}
+
+{\Large\bfseries The Time-to-Analysis Layer\\\large Pressure Points in AI-Assisted Research
+Systems\par}
+
+
+\vspace{0.4em}
+{\large\itshape AI research systems / product wedge\par}
+
+\vspace{1.6em}
+
+Tyson Jeffreys\\
+Independent Researcher\\
+\href{mailto:tyson@staygolden.dev}{tyson@staygolden.dev}
+
+\vspace{1.6em}
+
+Version 1.1 --- February 11, 2026
+
+\end{titlepage}
+
+
+\noindent\textbf{Series note (3/3).} This paper is Part 3 of a three-paper series on regime-level regulation in intelligent systems. Part 1 introduced two control regimes in embodied systems and a baseline regulator layer to reduce prolonged compensation. Part 2 proposed concept containers as representation-level regulation that stabilizes and reuses causal structure. Here we turn the same principle into a research-systems objective: reduce time-to-analysis with reusable analysis-layer artifacts and bursty synthesis.\par\medskip
+\hypertarget{abstract}{%
+\subsection{Abstract}\label{abstract}}
+
+Most AI ``research assistants'' optimize retrieval and summarization. We
+argue that the primary leverage point is different: minimizing
+\textbf{time-to-analysis}---the latency between raw information and
+\emph{intervention-ready understanding}. We define an \textbf{analysis
+layer} as a system output that exposes causal structure, disagreement,
+uncertainty, and decision levers, rather than producing flat summaries
+or single answers.
+
+We frame research as a \textbf{pressure point}: an upstream bottleneck
+where modest improvements compound across downstream decisions. We then
+show how analysis-layer outputs can reduce both human cognitive cost and
+system compute cost by preventing repeated recomputation. Finally, we
+outline an architecture for regulated research systems---low-cost
+monitoring near baseline with brief, high-intensity synthesis
+bursts---and propose falsifiable metrics and experiments.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hypertarget{introduction}{%
+\subsection{1. Introduction}\label{introduction}}
+
+Human research workflows rarely fail because information is unavailable.
+They fail because:
+
+\begin{itemize}
+\tightlist
+\item
+  relevant evidence is buried in noise
+\item
+  perspectives are fragmented across sources
+\item
+  contradictions are hard to see
+\item
+  the ``thinking'' phase is delayed by ingestion and context-switching
+\end{itemize}
+
+Current AI tools often accelerate \textbf{retrieval} and
+\textbf{summarization}, but the user still must assemble structure:
+causal models, levers, uncertainty, and what would change their mind.
+The result is a familiar pattern: repeated reading, repeated synthesis,
+repeated re-derivation.
+
+This paper proposes a different objective for research tools:
+
+\begin{quote}
+\textbf{Optimize time-to-analysis, not time-to-text.}
+\end{quote}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hypertarget{pressure-points}{%
+\subsection{2. Pressure points}\label{pressure-points}}
+
+\hypertarget{definition}{%
+\subsubsection{2.1 Definition}\label{definition}}
+
+A \textbf{pressure point} is an upstream point in a system where modest
+effort yields outsized downstream effects.
+
+Pressure points have three properties:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi})}
+\tightlist
+\item
+  \textbf{Upstream position}: affects many downstream actions
+\item
+  \textbf{Bottleneck}: currently constrains speed or quality
+\item
+  \textbf{Compounding}: improvements propagate multiplicatively
+\end{enumerate}
+
+\hypertarget{why-research-is-a-pressure-point}{%
+\subsubsection{2.2 Why research is a pressure
+point}\label{why-research-is-a-pressure-point}}
+
+Research sits upstream of:
+
+\begin{itemize}
+\tightlist
+\item
+  strategy and prioritization
+\item
+  design and engineering decisions
+\item
+  safety and compliance judgments
+\item
+  belief formation and coordination
+\end{itemize}
+
+If time-to-analysis decreases, many downstream activities become faster
+and more accurate---even if the downstream processes do not change.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hypertarget{the-analysis-layer}{%
+\subsection{3. The analysis layer}\label{the-analysis-layer}}
+
+\hypertarget{definition-1}{%
+\subsubsection{3.1 Definition}\label{definition-1}}
+
+The \textbf{analysis layer} is the minimal output representation that
+enables confident intervention decisions.
+
+An analysis-layer output is not a single answer. It is a structured
+object that includes:
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Causal skeleton}: key variables and directional relations
+\item
+  \textbf{Disagreement map}: where sources or schools diverge
+\item
+  \textbf{Levers}: interventions that matter most
+\item
+  \textbf{Predictions}: what changes under each lever
+\item
+  \textbf{Falsifiers}: what evidence would overturn the model
+\item
+  \textbf{Uncertainty boundaries}: what is unknown vs contested
+\end{itemize}
+
+A useful way to state it:
+
+\begin{quote}
+The analysis layer turns ``information'' into a small set of
+\emph{competing, testable causal stories}.
+\end{quote}
+
+\hypertarget{non-verifiable-selection-primitive}{%
+\subsubsection{3.2 Non-verifiable selection
+primitive}\label{non-verifiable-selection-primitive}}
+
+Research, writing, and strategy typically lack a crisp verifier: there is no immediate ground truth to check a causal story against. In verifier-free domains, a common failure mode is unbounded synthesis---keep thinking until it feels right. Instead, treat \emph{selection} as an explicit primitive: generate a bounded set of candidate analysis artifacts, perform bounded comparisons (pairwise or tournament-style) using a critic/judge as a noisy \emph{sensor}, and either select a winner or abstain. Crucially, \textbf{tie/abstain mass} should be treated as a first-class uncertainty signal: high tie/abstain triggers evidence acquisition (more sources, better decomposition, new falsifiers) rather than further synthesis; low tie/abstain permits consolidation into a single intervention-ready artifact.\footnote{This pattern is aligned with verifier-free reasoning approaches that rely on demonstrations and pairwise comparisons, e.g., \emph{Escaping the Verifier: Learning to Reason via Demonstrations} (2025).}
+
+\hypertarget{from-summaries-to-intervention-validity}{%
+\subsubsection{3.3 From summaries to intervention
+validity}\label{from-summaries-to-intervention-validity}}
+
+A summary can be accurate and still useless for action. The analysis
+layer is judged by a different standard:
+
+\begin{itemize}
+\tightlist
+\item
+  Can I identify what to do next?
+\item
+  Can I predict what will happen if I intervene?
+\item
+  Can I see what evidence would change the decision?
+\end{itemize}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hypertarget{time-to-analysis-metrics}{%
+\subsection{4. Time-to-analysis
+metrics}\label{time-to-analysis-metrics}}
+
+\hypertarget{time-to-analysis-tta}{%
+\subsubsection{4.1 Time-to-analysis (TTA)}\label{time-to-analysis-tta}}
+
+Define \textbf{TTA} as the time required (human time + system time) to
+produce an analysis-layer artifact that supports a stable decision.
+
+In controlled tests, measure:
+
+\begin{itemize}
+\tightlist
+\item
+  wall-clock time to reach a decision
+\item
+  number of sources read
+\item
+  number of synthesis cycles
+\item
+  number of decision reversals after new evidence
+\end{itemize}
+
+\hypertarget{compute-to-analysis-cta}{%
+\subsubsection{4.2 Compute-to-analysis
+(CTA)}\label{compute-to-analysis-cta}}
+
+For AI systems, define \textbf{CTA} as compute required to reach the
+analysis layer:
+
+\begin{itemize}
+\tightlist
+\item
+  tokens generated
+\item
+  tool calls
+\item
+  retrieval operations
+\item
+  planner expansions / rollouts
+\end{itemize}
+
+A key claim of this paper is that analysis-layer systems can reduce CTA
+by preventing repeated recomputation.
+
+\hypertarget{decision-stability}{%
+\subsubsection{4.3 Decision stability}\label{decision-stability}}
+
+Define a \textbf{reversal} as a change in the selected decision or
+causal model after incorporating additional evidence. A well-formed
+analysis layer should reduce reversals because disagreements and
+falsifiers are made explicit early.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hypertarget{regulated-research-systems}{%
+\subsection{5. Regulated research
+systems}\label{regulated-research-systems}}
+
+\hypertarget{baseline-vs-activation}{%
+\subsubsection{5.1 Baseline vs
+activation}\label{baseline-vs-activation}}
+
+A research system should not operate at constant high synthesis.
+Instead, it should behave like a regulated agent:
+
+\begin{itemize}
+\tightlist
+\item
+  remain in a low-cost monitoring baseline under low uncertainty
+\item
+  activate computation sharply when uncertainty, novelty, or stakes rise
+\item
+  collapse to baseline immediately after resolution
+\end{itemize}
+
+This is a posture claim: energy and robustness improve when activation
+is episodic rather than continuous.
+
+\hypertarget{analysis-bursts-and-container-formation}{%
+\subsubsection{5.2 Analysis bursts and container
+formation}\label{analysis-bursts-and-container-formation}}
+
+A practical mechanism is to treat expensive synthesis as a
+\textbf{burst} that produces a reusable artifact:
+
+\begin{itemize}
+\tightlist
+\item
+  build a causal structure from sources
+\item
+  output levers and falsifiers
+\item
+  store as a portable container with provenance
+\end{itemize}
+
+Future queries should reuse containers rather than re-deriving
+structure.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hypertarget{architecture}{%
+\subsection{6. Architecture}\label{architecture}}
+
+\hypertarget{pipeline-overview}{%
+\subsubsection{6.1 Pipeline overview}\label{pipeline-overview}}
+
+A minimal analysis-layer research system has five components:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi})}
+\tightlist
+\item
+  \textbf{Evidence ingestion}
+
+  \begin{itemize}
+  \tightlist
+  \item
+    retrieve sources with coverage constraints
+  \item
+    track provenance and recency
+  \end{itemize}
+\item
+  \textbf{Perspective decomposition}
+
+  \begin{itemize}
+  \tightlist
+  \item
+    cluster sources into schools / frames
+  \item
+    extract key claims and assumptions
+  \end{itemize}
+\item
+  \textbf{Causal skeleton synthesis}
+
+  \begin{itemize}
+  \tightlist
+  \item
+    identify variables and relationships
+  \item
+    generate competing causal graphs or narratives
+  \end{itemize}
+\item
+  \textbf{Lever + falsifier generation}
+
+  \begin{itemize}
+  \tightlist
+  \item
+    propose interventions that differentiate models
+  \item
+    propose evidence that would overturn each model
+  \end{itemize}
+\item
+  \textbf{Container bank + reuse}
+
+  \begin{itemize}
+  \tightlist
+  \item
+    store analysis-layer artifacts
+  \item
+    retrieve and adapt for new contexts
+  \end{itemize}
+\end{enumerate}
+
+\hypertarget{output-schema-analysis-artifact}{%
+\subsubsection{6.2 Output schema (analysis
+artifact)}\label{output-schema-analysis-artifact}}
+
+A recommended output schema:
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Handle}: short name
+\item
+  \textbf{Scope}: where it applies
+\item
+  \textbf{Causal skeleton}: variables + relations
+\item
+  \textbf{Disagreements}: competing claims + who holds them
+\item
+  \textbf{Levers}: actionable interventions
+\item
+  \textbf{Predictions}: outcomes under each lever
+\item
+  \textbf{Falsifiers}: evidence that breaks the model
+\item
+  \textbf{Uncertainty}: unknown vs contested
+\item
+  \textbf{Provenance}: sources + timestamps
+\item
+  \textbf{Confidence}: calibrated estimate
+\end{itemize}
+
+\hypertarget{guardrails-against-overconfidence}{%
+\subsubsection{6.3 Guardrails against
+overconfidence}\label{guardrails-against-overconfidence}}
+
+Analysis-layer outputs should include:
+
+\begin{itemize}
+\tightlist
+\item
+  explicit unknowns
+\item
+  explicit falsifiers
+\item
+  provenance links
+\item
+  separation of ``consensus'' vs ``speculation''
+\end{itemize}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hypertarget{why-analysis-layers-reduce-compute-and-energy}{%
+\subsection{7. Why analysis layers reduce compute and
+energy}\label{why-analysis-layers-reduce-compute-and-energy}}
+
+\hypertarget{avoiding-repeated-recomputation}{%
+\subsubsection{7.1 Avoiding repeated
+recomputation}\label{avoiding-repeated-recomputation}}
+
+Many agent systems repeatedly:
+
+\begin{itemize}
+\tightlist
+\item
+  retrieve similar sources
+\item
+  re-summarize
+\item
+  re-synthesize the same causal model
+\end{itemize}
+
+Analysis-layer artifacts are designed to be reusable, so the expensive
+part is amortized.
+
+\hypertarget{duty-cycle-reduction}{%
+\subsubsection{7.2 Duty-cycle reduction}\label{duty-cycle-reduction}}
+
+If heavy synthesis is treated as an episodic burst, then the system's
+high-compute duty cycle decreases:
+
+\begin{itemize}
+\tightlist
+\item
+  fewer long deliberation traces
+\item
+  fewer tool-call loops
+\item
+  fewer ``always-on'' monitoring cycles
+\end{itemize}
+
+This directly lowers compute-to-analysis and can improve
+infrastructure-level efficiency.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hypertarget{falsifiable-experiments}{%
+\subsection{8. Falsifiable experiments}\label{falsifiable-experiments}}
+
+\hypertarget{experiment-a-decision-tasks-with-controlled-evidence}{%
+\subsubsection{8.1 Experiment A: decision tasks with controlled
+evidence}\label{experiment-a-decision-tasks-with-controlled-evidence}}
+
+Create tasks where participants must decide between interventions
+(technical choice, policy choice, product strategy) using a set of
+sources.
+
+Conditions:
+
+\begin{itemize}
+\tightlist
+\item
+  A1: retrieval only
+\item
+  A2: retrieval + summary
+\item
+  A3: analysis layer (causal skeleton + disagreement + levers +
+  falsifiers)
+\end{itemize}
+
+Measure:
+
+\begin{itemize}
+\tightlist
+\item
+  TTA (time-to-analysis)
+\item
+  decision accuracy (ground-truth or expert grading)
+\item
+  reversal count after additional evidence
+\item
+  CTA (tokens/tool calls)
+\end{itemize}
+
+Prediction:
+
+\begin{itemize}
+\tightlist
+\item
+  A3 reduces TTA and reversals at comparable or improved accuracy.
+\end{itemize}
+
+\hypertarget{experiment-b-transfer-robustness}{%
+\subsubsection{8.2 Experiment B: transfer
+robustness}\label{experiment-b-transfer-robustness}}
+
+Hold causal structure constant while changing surface form (different
+sources, different writing styles, different ordering).
+
+Measure:
+
+\begin{itemize}
+\tightlist
+\item
+  stability of levers and falsifiers
+\item
+  CTA reduction via reuse
+\end{itemize}
+
+\hypertarget{experiment-c-adversarial-evidence-injection}{%
+\subsubsection{8.3 Experiment C: adversarial evidence
+injection}\label{experiment-c-adversarial-evidence-injection}}
+
+Introduce conflicting or misleading sources mid-task.
+
+Measure:
+
+\begin{itemize}
+\tightlist
+\item
+  whether the analysis layer flags uncertainty correctly
+\item
+  whether falsifiers trigger updates rather than thrash
+\end{itemize}
+
+Negative test:
+
+\begin{itemize}
+\tightlist
+\item
+  if analysis-layer outputs increase brittleness or overconfidence, the
+  schema and calibration are insufficient.
+\end{itemize}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hypertarget{limitations}{%
+\subsection{9. Limitations}\label{limitations}}
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Domain dependence}: ``correct levers'' differ across domains.
+\item
+  \textbf{Calibration}: confidence estimates are hard; provenance helps
+  but does not solve.
+\item
+  \textbf{Container drift}: stored artifacts must decay or be revisited
+  as evidence changes.
+\item
+  \textbf{Incentive mismatch}: tools optimized for speed may hide
+  uncertainty; analysis layers must surface it.
+\end{itemize}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hypertarget{conclusion}{%
+\subsection{10. Conclusion}\label{conclusion}}
+
+We proposed the time-to-analysis layer as a target for AI-assisted
+research systems and argued that research is a strategic pressure point
+where improvements compound across downstream decisions. An analysis
+layer is defined by intervention-ready structure: causal skeletons,
+disagreements, levers, falsifiers, and uncertainty boundaries.
+
+The architectural claim is practical and falsifiable: \textbf{systems
+that produce reusable analysis artifacts and regulate heavy synthesis as
+episodic bursts should reduce compute-to-analysis, reduce decision
+reversals, and improve time-to-decision at comparable accuracy}.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hypertarget{appendix-a-suggested-figures}{%
+\subsection{Appendix A: Suggested
+figures}\label{appendix-a-suggested-figures}}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi})}
+\tightlist
+\item
+  Retrieval vs summary vs analysis-layer output (three side-by-side
+  boxes)
+\item
+  Time-series: high-compute bursts separated by low-cost baseline
+  monitoring
+\item
+  Reuse diagram: analysis artifact produced once → reused across
+  multiple downstream tasks
+\end{enumerate}
+
+\hypertarget{appendix-b-minimal-analysis-layer-checklist}{%
+\subsection{Appendix B: Minimal ``analysis layer''
+checklist}\label{appendix-b-minimal-analysis-layer-checklist}}
+
+\begin{itemize}
+\tightlist
+\item
+  What are the competing causal models?
+\item
+  Where do credible sources disagree?
+\item
+  What intervention would discriminate between models?
+\item
+  What evidence would change the conclusion?
+\item
+  What remains unknown (not merely uncertain)?
+\end{itemize}
+\newpage
+
+{
+\noindent\textbf{Note on authorship and tools:}\\
+This work was developed through iterative reasoning, modeling, and synthesis.
+Large language models were used as a collaborative tool to assist with drafting,
+clarification, and cross-domain translation. All conceptual framing, structure,
+and final judgments remain the responsibility of the author.
+}
+
+\end{document}
